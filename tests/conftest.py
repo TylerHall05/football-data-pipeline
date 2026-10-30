@@ -3,11 +3,15 @@ import uuid
 from collections.abc import Iterator
 from pathlib import Path
 
+import pandas as pd
 import psycopg
 import pytest
 
 from football_pipeline.config import get_database_url
 from football_pipeline.db import apply_schema, connect
+from football_pipeline.extract import parse_raw_csv
+from football_pipeline.transform import deduplicate, transform_matches
+from football_pipeline.validate import validate_matches
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -16,6 +20,15 @@ FIXTURES = Path(__file__).parent / "fixtures"
 def sample_csv_bytes() -> bytes:
     """Synthetic E0 2024/25 sample with deliberate data-quality problems."""
     return (FIXTURES / "sample_E0_2425.csv").read_bytes()
+
+
+@pytest.fixture
+def clean_matches(sample_csv_bytes: bytes) -> pd.DataFrame:
+    """The sample file after transform, validation and de-duplication (valid rows only)."""
+    cleaned = transform_matches(parse_raw_csv(sample_csv_bytes, "2425", "E0"))
+    valid, _ = validate_matches(cleaned)
+    deduped, _ = deduplicate(valid)
+    return deduped
 
 
 @pytest.fixture(scope="session")
