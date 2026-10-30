@@ -1,22 +1,3 @@
-import pytest
-
-from football_pipeline.load import (
-    load_leagues,
-    stage_matches,
-    upsert_matches_from_staging,
-    upsert_teams_from_staging,
-)
-
-
-@pytest.fixture
-def loaded(conn, clean_matches):
-    load_leagues(conn)
-    stage_matches(conn, clean_matches)
-    upsert_teams_from_staging(conn)
-    upsert_matches_from_staging(conn)
-    return conn
-
-
 def test_match_results_has_team_names(loaded):
     row = loaded.execute(
         "SELECT home_team, away_team, home_goals, away_goals FROM v_match_results "
