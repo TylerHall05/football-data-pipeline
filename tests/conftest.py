@@ -53,6 +53,7 @@ def conn(db_url: str) -> Iterator[psycopg.Connection]:
     try:
         with connect(db_url, search_path=schema) as connection:
             apply_schema(connection)
+            connection.commit()  # so tests can exercise rollback without losing the schema
             yield connection
     finally:
         with psycopg.connect(db_url, autocommit=True) as admin:
