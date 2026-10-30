@@ -31,6 +31,37 @@ COLUMN_MAP: dict[str, str] = {
     "AR": "away_reds",
 }
 
+INT_COLUMNS = [
+    "home_goals",
+    "away_goals",
+    "ht_home_goals",
+    "ht_away_goals",
+    "home_shots",
+    "away_shots",
+    "home_shots_on_target",
+    "away_shots_on_target",
+    "home_fouls",
+    "away_fouls",
+    "home_corners",
+    "away_corners",
+    "home_yellows",
+    "away_yellows",
+    "home_reds",
+    "away_reds",
+]
+
+# Variant spellings seen across sources -> the name used in football-data.co.uk.
+# Extend this as new variants appear.
+TEAM_ALIASES: dict[str, str] = {
+    "Man Utd": "Man United",
+    "Manchester United": "Man United",
+    "Manchester City": "Man City",
+    "Spurs": "Tottenham",
+    "Nottingham Forest": "Nott'm Forest",
+    "Nottm Forest": "Nott'm Forest",
+    "Wolverhampton": "Wolves",
+}
+
 KEY_COLUMNS = ["league_code", "season", "match_date", "home_team", "away_team"]
 OUTPUT_COLUMNS = ["league_code", "season", *COLUMN_MAP.values()]
 
@@ -56,3 +87,23 @@ def clean_kickoff_time(series: pd.Series) -> pd.Series:
     cleaned = series.astype("string").str.strip()
     valid = cleaned.str.fullmatch(r"([01]?\d|2[0-3]):[0-5]\d").fillna(False).astype(bool)
     return cleaned.where(valid).str.zfill(5)
+
+
+def clean_team_names(series: pd.Series) -> pd.Series:
+    """Trim, collapse internal whitespace and apply known aliases to team names."""
+    cleaned = series.astype("string").str.strip().str.replace(r"\s+", " ", regex=True)
+    cleaned = cleaned.mask(cleaned == "")
+    return cleaned.replace(TEAM_ALIASES)
+
+
+def clean_result(series: pd.Series) -> pd.Series:
+    """Upper-case and trim H/D/A result codes; empty strings become missing."""
+    cleaned = series.astype("string").str.strip().str.upper()
+    return cleaned.mask(cleaned == "")
+
+
+def to_nullable_int(series: pd.Series) -> pd.Series:
+    """Convert to pandas nullable Int64; non-numeric and non-integral values become <NA>."""
+    numeric = pd.to_numeric(series, errors="coerce")
+    numeric = numeric.where(numeric == numeric.round())
+    return numeric.astype("Int64")
