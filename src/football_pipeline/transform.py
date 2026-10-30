@@ -107,3 +107,29 @@ def to_nullable_int(series: pd.Series) -> pd.Series:
     numeric = pd.to_numeric(series, errors="coerce")
     numeric = numeric.where(numeric == numeric.round())
     return numeric.astype("Int64")
+
+
+def clean_text(series: pd.Series) -> pd.Series:
+    """Trim free text (e.g. referee names); empty strings become missing."""
+    cleaned = series.astype("string").str.strip()
+    return cleaned.mask(cleaned == "")
+
+
+def drop_empty_rows(df: pd.DataFrame) -> pd.DataFrame:
+    """Drop rows with no data in any modelled column (trailing blank lines in the CSV)."""
+    return df.dropna(how="all", subset=list(COLUMN_MAP.values())).reset_index(drop=True)
+
+
+def transform_matches(raw: pd.DataFrame) -> pd.DataFrame:
+    """Raw text frame -> typed, cleaned frame. Does not validate or deduplicate."""
+    df = select_and_rename(raw)
+    df["match_date"] = parse_dates(df["match_date"])
+    df["kickoff_time"] = clean_kickoff_time(df["kickoff_time"])
+    for col in ("home_team", "away_team"):
+        df[col] = clean_team_names(df[col])
+    for col in ("result", "ht_result"):
+        df[col] = clean_result(df[col])
+    df["referee"] = clean_text(df["referee"])
+    for col in INT_COLUMNS:
+        df[col] = to_nullable_int(df[col])
+    return drop_empty_rows(df)
