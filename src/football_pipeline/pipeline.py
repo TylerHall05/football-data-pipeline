@@ -10,9 +10,11 @@ import psycopg
 import requests
 
 from football_pipeline.audit import finish_run, record_rejects, start_run
+from football_pipeline.db import apply_schema
 from football_pipeline.extract import SeasonNotAvailable, extract_season
 from football_pipeline.load import (
     LoadResult,
+    load_leagues,
     stage_matches,
     upsert_matches_from_staging,
     upsert_teams_from_staging,
@@ -88,3 +90,31 @@ def run_season(
         conn.commit()
         logger.exception("%s %s failed", league_code, season)
         raise
+
+
+def run_all(
+    conn: psycopg.Connection,
+    league_codes: list[str],
+    seasons: list[str],
+    raw_dir: Path | str,
+    offline: bool = False,
+    session: requests.Session | None = None,
+) -> list[RunSummary]:
+    """Ensure the schema and leagues exist, then load every league/season combination.
+
+    One failing league/season does not stop the others; failures come back in the summaries.
+    """
+    apply_schema(conn)
+    load_leagues(conn)
+    conn.commit()
+
+    summaries = []
+    for season in seasons:
+        for league_code in league_codes:
+            try:
+                summaries.append(run_season(conn, league_code, season, raw_dir, offline, session))
+            except Exception as exc:  # already logged and audited in run_season
+                summaries.append(
+                    RunSummary(league_code, season, "failed", error=f"{type(exc).__name__}: {exc}")
+                )
+    return summaries

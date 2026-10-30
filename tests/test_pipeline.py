@@ -64,3 +64,27 @@ def test_failure_rolls_back_the_load_but_keeps_the_audit_row(ready, raw_dir, mon
     assert ready.execute("SELECT count(*) FROM teams").fetchone()[0] == 0
     status, error = ready.execute("SELECT status, error_message FROM ingestion_runs").fetchone()
     assert status == "failed" and "disk on fire" in error
+
+
+def test_run_all_covers_every_combination(conn, raw_dir):
+    summaries = pipeline.run_all(conn, ["E0", "E1"], ["2425"], raw_dir, offline=True)
+    assert [(s.league_code, s.status) for s in summaries] == [
+        ("E0", "succeeded"),
+        ("E1", "skipped"),
+    ]
+    assert conn.execute("SELECT count(*) FROM leagues").fetchone()[0] > 0
+
+
+def test_run_all_continues_after_a_failure(conn, raw_dir, monkeypatch):
+    real = pipeline.extract_season
+
+    def flaky(season, league, *args, **kwargs):
+        if league == "E0":
+            raise ValueError("corrupt file")
+        return real(season, league, *args, **kwargs)
+
+    monkeypatch.setattr(pipeline, "extract_season", flaky)
+    (raw_dir / "E1_2425.csv").write_bytes((raw_dir / "E0_2425.csv").read_bytes())
+    summaries = pipeline.run_all(conn, ["E0", "E1"], ["2425"], raw_dir, offline=True)
+    assert [s.status for s in summaries] == ["failed", "succeeded"]
+    assert "corrupt file" in summaries[0].error
