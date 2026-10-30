@@ -133,3 +133,13 @@ def transform_matches(raw: pd.DataFrame) -> pd.DataFrame:
     for col in INT_COLUMNS:
         df[col] = to_nullable_int(df[col])
     return drop_empty_rows(df)
+
+
+def deduplicate(df: pd.DataFrame) -> tuple[pd.DataFrame, int]:
+    """Drop repeated fixtures, keeping the last occurrence of each natural key.
+
+    Returns the deduplicated frame and the number of rows removed. A fixture is identified by
+    ``KEY_COLUMNS`` (league, season, date, home, away), which is also the table's unique key.
+    """
+    deduped = df.drop_duplicates(subset=KEY_COLUMNS, keep="last").reset_index(drop=True)
+    return deduped, len(df) - len(deduped)
