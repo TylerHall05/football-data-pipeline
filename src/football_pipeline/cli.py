@@ -10,6 +10,7 @@ from collections.abc import Sequence
 from football_pipeline.config import LEAGUES, recent_seasons
 from football_pipeline.db import apply_schema, connect
 from football_pipeline.pipeline import RunSummary, run_all
+from football_pipeline.sample_data import write_sample_files
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -34,6 +35,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
     run.add_argument("--raw-dir", default="data/raw", help="where raw CSVs are cached")
     run.add_argument("--offline", action="store_true", help="read only from the raw cache")
+
+    sample = sub.add_parser(
+        "sample-data", help="write SYNTHETIC season CSVs to the raw cache (for offline demos)"
+    )
+    sample.add_argument("--leagues", nargs="+", default=["E0"], metavar="CODE")
+    sample.add_argument("--seasons", nargs="+", metavar="YYZZ", help="default: 3 most recent")
+    sample.add_argument("--raw-dir", default="data/raw")
+    sample.add_argument("--seed", type=int, default=0)
     return parser
 
 
@@ -62,6 +71,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         with connect() as conn:
             for name in apply_schema(conn):
                 print(f"applied {name}")
+        return 0
+
+    if args.command == "sample-data":
+        seasons = args.seasons or recent_seasons(3)
+        for path in write_sample_files(args.leagues, seasons, args.raw_dir, args.seed):
+            print(f"wrote {path} (synthetic)")
         return 0
 
     unknown = [code for code in args.leagues if code not in LEAGUES]

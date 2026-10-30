@@ -39,3 +39,10 @@ def test_end_to_end_offline_run(db_url, tmp_path, sample_csv_bytes, capsys, monk
     finally:
         with psycopg.connect(db_url, autocommit=True) as admin:
             admin.execute(f"DROP SCHEMA {schema} CASCADE")
+
+
+def test_sample_data_command_writes_files(tmp_path, capsys):
+    code = cli.main(["sample-data", "--seasons", "2425", "--raw-dir", str(tmp_path)])
+    assert code == 0
+    assert (tmp_path / "E0_2425.csv").exists()
+    assert "synthetic" in capsys.readouterr().out
