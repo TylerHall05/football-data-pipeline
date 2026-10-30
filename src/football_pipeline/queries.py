@@ -66,3 +66,11 @@ def points_progression(
         sql += " AND team = ANY(%s)"
         params.append(list(teams))
     return _frame(conn, sql + " ORDER BY team, matchweek", params)
+
+
+def last_successful_run(conn: psycopg.Connection) -> pd.Timestamp | None:
+    """When the pipeline last finished a successful load (None if it never has)."""
+    value = conn.execute(
+        "SELECT max(finished_at) FROM ingestion_runs WHERE status = 'succeeded'"
+    ).fetchone()[0]
+    return pd.Timestamp(value) if value is not None else None

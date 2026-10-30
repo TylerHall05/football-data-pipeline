@@ -33,3 +33,16 @@ def test_points_progression_can_filter_teams(loaded):
 
 def test_season_summaries_returns_a_row_per_season(loaded):
     assert len(queries.season_summaries(loaded, "E0")) == 1
+
+
+def test_last_successful_run_is_none_before_any_load(conn):
+    assert queries.last_successful_run(conn) is None
+
+
+def test_last_successful_run_ignores_failures(conn):
+    from football_pipeline.audit import finish_run, start_run
+
+    finish_run(conn, start_run(conn, "E0", "2425"), "failed", error_message="x")
+    assert queries.last_successful_run(conn) is None
+    finish_run(conn, start_run(conn, "E0", "2425"), "succeeded")
+    assert queries.last_successful_run(conn) is not None
