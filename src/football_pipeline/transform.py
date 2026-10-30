@@ -43,3 +43,16 @@ def select_and_rename(raw: pd.DataFrame) -> pd.DataFrame:
     """
     wanted = ["league_code", "season", *COLUMN_MAP]
     return raw.reindex(columns=wanted).rename(columns=COLUMN_MAP)[OUTPUT_COLUMNS]
+
+
+def parse_dates(series: pd.Series) -> pd.Series:
+    """Parse day-first dates in either dd/mm/yyyy or dd/mm/yy form; bad values become NaT."""
+    cleaned = series.astype("string").str.strip()
+    return pd.to_datetime(cleaned, format="mixed", dayfirst=True, errors="coerce")
+
+
+def clean_kickoff_time(series: pd.Series) -> pd.Series:
+    """Normalise kick-off times to zero-padded 'HH:MM'; anything else becomes missing."""
+    cleaned = series.astype("string").str.strip()
+    valid = cleaned.str.fullmatch(r"([01]?\d|2[0-3]):[0-5]\d").fillna(False).astype(bool)
+    return cleaned.where(valid).str.zfill(5)
