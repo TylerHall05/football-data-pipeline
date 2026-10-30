@@ -58,3 +58,15 @@ def stage_matches(conn: psycopg.Connection, df: pd.DataFrame) -> int:
             for row in df[list(columns)].itertuples(index=False, name=None):
                 copy.write_row([_to_python(v) for v in row])
     return len(df)
+
+
+def upsert_teams_from_staging(conn: psycopg.Connection) -> int:
+    """Insert any team in staging that is not yet in ``teams``. Returns how many were new."""
+    cur = conn.execute(
+        f"""INSERT INTO teams (name)
+            SELECT home_team FROM {STAGING_TABLE}
+            UNION
+            SELECT away_team FROM {STAGING_TABLE}
+            ON CONFLICT (name) DO NOTHING"""
+    )
+    return cur.rowcount
