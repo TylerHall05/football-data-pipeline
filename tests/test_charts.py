@@ -45,4 +45,19 @@ def test_attack_defence_axis_is_flipped_so_top_right_is_best():
     table = pd.DataFrame({"team": ["A", "B"], "goals_for": [50, 30], "goals_against": [20, 40]})
     fig = charts.attack_defence_figure(table)
     assert fig.layout.xaxis.autorange == "reversed"
-    assert list(fig.data[0].text) == ["A", "B"]
+    assert list(fig.data[0].customdata) == ["A", "B"]  # hover always has the full name
+
+
+def test_spread_labels_enforces_a_minimum_gap_and_keeps_order():
+    out = charts.spread_labels([80.0, 79.0, 78.5, 60.0], min_gap=3.0)
+    assert all(b - a >= 3.0 - 1e-9 for a, b in zip(sorted(out), sorted(out)[1:], strict=False))
+    assert out[3] == 60.0  # an isolated label is not moved
+    assert out[0] > out[1] > out[2]  # ordering preserved
+
+
+def test_only_standout_teams_get_permanent_labels():
+    table = pd.DataFrame(
+        {"team": [f"T{i}" for i in range(20)], "goals_for": range(20), "goals_against": [10] * 20}
+    )
+    labelled = [t for t in charts.attack_defence_figure(table).data[0].text if t]
+    assert 0 < len(labelled) <= 7 < 20
