@@ -1,0 +1,30 @@
+name: Scheduled data update
+
+# Refreshes the warehouse every morning. Loads are idempotent upserts, so re-running (or an
+# overlapping run) never duplicates data. Needs a repository secret DATABASE_URL pointing at a
+# PostgreSQL instance reachable from GitHub (e.g. a free hosted Postgres).
+on:
+  schedule:
+    - cron: "0 6 * * *"   # 06:00 UTC daily
+  workflow_dispatch:
+
+concurrency:
+  group: data-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - name: Check the secret is configured
+        run: test -n "$DATABASE_URL" || { echo "::error::Set the DATABASE_URL repository secret"; exit 1; }
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - run: pip install -e .
+      # Exits non-zero if any league/season fails, which turns the run red and notifies you.
+      - run: football-pipeline run --leagues E0 E1 SP1 D1 I1 F1 --recent 2
