@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import io
 import logging
 import re
 import time
 from pathlib import Path
 
+import pandas as pd
 import requests
 
 logger = logging.getLogger(__name__)
@@ -75,3 +77,26 @@ def download_csv(
             )
             time.sleep(delay)
     raise RuntimeError(f"Failed to download {url} after {retries} attempts") from last_error
+
+
+def decode_bytes(content: bytes) -> str:
+    """Decode a CSV body; football-data files are UTF-8 (with BOM) or Windows-1252/Latin-1."""
+    try:
+        return content.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        return content.decode("latin-1")
+
+
+def parse_raw_csv(content: bytes, season: str, league: str) -> pd.DataFrame:
+    """Parse raw CSV bytes into an all-string DataFrame, tagged with season and league.
+
+    Everything is read as text so that typing and validation happen explicitly in the
+    transform stage. Fully blank rows and stray unnamed columns are dropped.
+    """
+    frame = pd.read_csv(io.StringIO(decode_bytes(content)), dtype=str, on_bad_lines="skip")
+    frame.columns = [str(c).strip() for c in frame.columns]
+    frame = frame.loc[:, ~frame.columns.str.startswith("Unnamed")]
+    frame = frame.dropna(how="all").reset_index(drop=True)
+    frame.insert(0, "league_code", league)
+    frame.insert(1, "season", validate_season(season))
+    return frame

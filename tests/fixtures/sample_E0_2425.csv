@@ -1,0 +1,17 @@
+Div,Date,Time,HomeTeam,AwayTeam,FTHG,FTAG,FTR,HTHG,HTAG,HTR,Referee,HS,AS,HST,AST,HF,AF,HC,AC,HY,AY,HR,AR,B365H,B365D,B365A
+E0,16/08/2024,20:00,Man United,Fulham,1,0,H,0,0,D,R Jones,14,10,5,2,12,10,7,8,2,3,0,0,1.5,4.2,6.5
+E0,17/08/2024,12:30,Ipswich,Liverpool,0,2,A,0,0,D,D England,12,16,2,6,10,9,4,8,1,2,0,0,9.0,5.5,1.3
+E0,17/08/2024,15:00,Arsenal,Wolves,2,0,H,1,0,H,A Taylor,18,7,6,1,9,14,8,3,1,2,0,0,1.2,6.5,12.0
+E0,17/08/2024,15:00,Everton,Brighton,0,3,A,0,1,A,S Hooper,11,14,3,6,10,9,5,6,2,1,0,0,3.3,3.4,2.2
+E0,17/08/2024,15:00,Newcastle,Southampton,1,0,H,0,0,D,P Bankes,17,9,5,3,11,13,9,2,3,1,0,0,1.3,5.5,9.0
+E0,17/08/2024,15:00,Nott'm Forest,Bournemouth,1,1,D,1,0,H,J Gillett,12,13,4,4,12,11,6,5,2,2,0,0,2.6,3.4,2.8
+E0,17/08/2024,17:30,West Ham,Aston Villa,1,2,A,0,1,A,S Attwell,15,13,4,5,14,10,6,4,3,1,0,0,3.0,3.6,2.3
+E0,18/08/2024,14:00,Brentford,Crystal Palace,2,1,H,1,0,H,M Salisbury,13,10,5,3,10,12,6,5,2,3,0,0,2.2,3.5,3.4
+E0,18/08/2024,16:30,Chelsea,Man City,0,2,A,0,1,A,A Madley,9,13,2,6,12,8,3,6,2,1,0,0,4.5,4.2,1.7
+E0,24/08/2024,15:00,Tottenham,Everton,4,0,H,2,0,H,C Pawson,19,6,8,1,8,11,9,2,1,2,0,0,1.6,4.4,5.2
+E0,17/08/2024,15:00,Arsenal,Wolves,2,0,H,1,0,H,A Taylor,18,7,6,1,9,14,8,3,1,2,0,0,1.2,6.5,12.0
+E0,31/08/24,15:00, Liverpool ,Man  United,3,0,H,1,0,H,M Oliver,20,8,7,2,9,12,8,3,1,2,0,0,1.4,5.0,7.5
+E0,31/08/2024,15:00,Fulham,Leicester,1,1,H,0,0,D,T Robinson,10,10,3,3,10,10,5,5,1,1,0,0,2.1,3.4,3.6
+E0,01/09/2024,16:30,Wolves,Chelsea,,,,,,,,,,,,,,,,,,,,4.0,3.6,1.9
+E0,not a date,15:00,Brighton,Arsenal,1,1,D,0,1,A,K Friend,11,12,4,4,9,9,5,6,2,2,0,0,3.1,3.5,2.3
+,,,,,,,,,,,,,,,,,,,,,,,,,,
