@@ -100,3 +100,29 @@ def parse_raw_csv(content: bytes, season: str, league: str) -> pd.DataFrame:
     frame.insert(0, "league_code", league)
     frame.insert(1, "season", validate_season(season))
     return frame
+
+
+def extract_season(
+    season: str,
+    league: str,
+    raw_dir: Path | str,
+    offline: bool = False,
+    session: requests.Session | None = None,
+) -> pd.DataFrame:
+    """Return the raw DataFrame for one league/season.
+
+    Online mode downloads the CSV and caches the untouched bytes under ``raw_dir`` so a
+    run can be replayed or audited later. Offline mode reads only from that cache.
+    Raises ``SeasonNotAvailable`` if the file does not exist remotely or in the cache.
+    """
+    path = raw_path(raw_dir, season, league)
+    if offline:
+        if not path.exists():
+            raise SeasonNotAvailable(str(path))
+        content = path.read_bytes()
+    else:
+        content = download_csv(season_url(season, league), session=session)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(content)
+        logger.info("Cached %s (%d bytes)", path, len(content))
+    return parse_raw_csv(content, season, league)
